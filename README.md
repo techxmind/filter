@@ -92,17 +92,17 @@ core.GetOperationFactory().Register(&ContainsOperation{}, "contains")
 
 type ContainsOperation struct {}
 
-func (o \*ContainsOperation) String() string {
+func (o *ContainsOperation) String() string {
     return "contains"
 }
 
-func (o \*ContainsOperation) Run(ctx \*core.Context, variable core.Variable, value interface{}) bool {
+func (o *ContainsOperation) Run(ctx *core.Context, variable core.Variable, value interface{}) bool {
 	v := core.GetVariableValue(ctx, variable)
 
     return strings.Contains(itype.String(v), itype.String(value))
 }
 
-func (o \*ContainsOperation) PrepareValue(v interface{}) (interface{}, error) {
+func (o *ContainsOperation) PrepareValue(v interface{}) (interface{}, error) {
     if str, ok := v.(string); ok {
         return v, nil
     }
