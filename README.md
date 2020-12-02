@@ -113,3 +113,29 @@ func (o \*ContainsOperation) PrepareValue(v interface{}) (interface{}, error) {
 
 ## Assignments
 ...
+
+## Trace
+
+Trace each step of filter's execution.
+
+```
+import (
+    "context"
+    "os"
+
+	"github.com/techxmind/filter/core"
+	"github.com/techxmind/filter/filter"
+)
+
+//other code...
+
+// your business context
+ctx := context.Background()
+
+// Initialize filter context with trace option
+// You can use your custom Trace instaed of the default implementtion
+filterCtx := core.WithContext(ctx, WithTrace(core.NewTrace(os.Stderr)))
+
+youfilter.Run(filterCtx, data)
+```
+
