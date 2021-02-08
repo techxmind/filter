@@ -24,6 +24,36 @@ func TestVariable(t *testing.T) {
 	assert.Nil(t, v3)
 }
 
+func TestRegisterAlias(t *testing.T) {
+	ctx := NewContext()
+	f := GetVariableFactory()
+
+	f.RegisterAlias("succ", "s")
+	v := f.Create("s")
+	assert.NotNil(t, v)
+	assert.Equal(t, true, GetVariableValue(ctx, v))
+
+	f.RegisterAlias("ctx.foo", "foo", "f")
+	f.RegisterAlias("ctx.bar.", "bar.")
+
+	ctx.Set("foo", "fv")
+	ctx.Set("bar", map[string]interface{}{"baz": "bv"})
+	v = f.Create("foo")
+	assert.NotNil(t, v)
+	assert.EqualValues(t, "fv", GetVariableValue(ctx, v))
+
+	v = f.Create("f")
+	assert.NotNil(t, v)
+	assert.EqualValues(t, "fv", GetVariableValue(ctx, v))
+
+	v = f.Create("bar.baz")
+	assert.NotNil(t, v)
+	assert.EqualValues(t, "bv", GetVariableValue(ctx, v))
+
+	v = f.Create("bar")
+	assert.Nil(t, v)
+}
+
 func TestGetVariableValue(t *testing.T) {
 	ctx := NewContext()
 	var1Val := &StaticValue{"var1"}

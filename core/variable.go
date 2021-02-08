@@ -10,6 +10,7 @@ var (
 
 	_variableFactory = &stdVariableFactory{
 		creators: make(map[string]VariableCreator),
+		aliases:  make(map[string]string),
 	}
 )
 
@@ -36,6 +37,10 @@ func (f VariableCreatorFunc) Create(name string) Variable {
 type VariableFactory interface {
 	VariableCreator
 	Register(VariableCreator, ...string)
+	// RegisterAlias register aliases for destination variable
+	// RegisterAlias("time", "t") t => t
+	// RegisterAlias("ctx.something", "s") s.l => ctx.something.l
+	RegisterAlias(dest string, aliases ...string) error
 }
 
 // GetVariableFactory return VariableFactory
@@ -46,24 +51,38 @@ func GetVariableFactory() VariableFactory {
 // stdVariableFactory default VariableFactory
 type stdVariableFactory struct {
 	creators map[string]VariableCreator
+	aliases  map[string]string
 }
 
-func (self *stdVariableFactory) Register(creator VariableCreator, names ...string) {
+func (f *stdVariableFactory) Register(creator VariableCreator, names ...string) {
 	for _, name := range names {
-		self.creators[name] = creator
+		f.creators[name] = creator
 	}
 }
 
-func (f *stdVariableFactory) Create(name string) Variable {
-	if creator, ok := f.creators[name]; ok {
+func (f *stdVariableFactory) RegisterAlias(dest string, aliases ...string) error {
+	for _, alias := range aliases {
+		f.aliases[alias] = dest
+	}
+	return nil
+}
 
-		return creator.Create(name)
+func (f *stdVariableFactory) Create(name string) Variable {
+	segments := strings.Split(name, ".")
+	if v, ok := f.aliases[segments[0]]; ok {
+		n := strings.Split(v, ".")
+		segments = append(n, segments[1:]...)
+	} else if v, ok := f.aliases[segments[0]+"."]; ok && len(segments) > 1 {
+		n := strings.Split(strings.TrimRight(v, "."), ".")
+		segments = append(n, segments[1:]...)
+	}
+	if len(segments) == 1 {
+		if creator, ok := f.creators[segments[0]]; ok {
+			return creator.Create(segments[0])
+		}
 	} else {
-		segments := strings.Split(name, ".")
-		if len(segments) > 1 {
-			if creator, ok := f.creators[segments[0]+"."]; ok {
-				return creator.Create(name)
-			}
+		if creator, ok := f.creators[segments[0]+"."]; ok {
+			return creator.Create(strings.Join(segments, "."))
 		}
 	}
 
